@@ -23,7 +23,7 @@
 , libarchive
 , p11-kit
 , sqlite
-, gcr
+, gcr_4
 , isocodes
 , desktop-file-utils
 , nettle
@@ -71,7 +71,7 @@ stdenv.mkDerivation rec {
   ];
 
   buildInputs = [
-    gcr
+    gcr_4
     gdk-pixbuf
     glib
     glib-networking
