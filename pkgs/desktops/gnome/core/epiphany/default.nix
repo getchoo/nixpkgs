@@ -6,16 +6,16 @@
 , fetchurl
 , fetchpatch
 , pkg-config
-, gtk3
+, gtk4
 , glib
 , icu
-, wrapGAppsHook
+, wrapGAppsHook4
 , gnome
-, libportal-gtk3
+, libportal-gtk4
 , libxml2
 , libxslt
 , itstool
-, webkitgtk_4_1
+, webkitgtk_6_0
 , libsoup_3
 , glib-networking
 , libsecret
@@ -65,9 +65,9 @@ stdenv.mkDerivation rec {
     meson
     ninja
     pkg-config
-    wrapGAppsHook
+    wrapGAppsHook4
     buildPackages.glib
-    buildPackages.gtk3
+    buildPackages.gtk4
   ];
 
   buildInputs = [
@@ -82,13 +82,13 @@ stdenv.mkDerivation rec {
     gst_all_1.gst-plugins-good
     gst_all_1.gst-plugins-ugly
     gst_all_1.gstreamer
-    gtk3
+    gtk4
     icu
     isocodes
     json-glib
     libdazzle
     libhandy
-    libportal-gtk3
+    libportal-gtk4
     libarchive
     libsecret
     libsoup_3
@@ -96,7 +96,7 @@ stdenv.mkDerivation rec {
     nettle
     p11-kit
     sqlite
-    webkitgtk_4_1
+    webkitgtk_6_0
   ];
 
   # Tests need an X display
