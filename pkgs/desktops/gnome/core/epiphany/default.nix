@@ -4,7 +4,6 @@
 , ninja
 , gettext
 , fetchurl
-, fetchpatch
 , pkg-config
 , gtk4
 , glib
@@ -30,8 +29,7 @@
 , gdk-pixbuf
 , gst_all_1
 , json-glib
-, libdazzle
-, libhandy
+, libadwaita
 , buildPackages
 , withPantheon ? false
 }:
@@ -44,18 +42,6 @@ stdenv.mkDerivation rec {
     url = "mirror://gnome/sources/${pname}/${lib.versions.major version}/${pname}-${version}.tar.xz";
     sha256 = "UccRkzgLjdoM7opWyLROzZLDi8fDStCGkP0rbXggApE=";
   };
-
-  patches = lib.optionals withPantheon [
-    # Pantheon specific patches for epiphany
-    # https://github.com/elementary/browser
-    #
-    # Patch to unlink nav buttons
-    # https://github.com/elementary/browser/pull/18
-    (fetchpatch {
-      url = "https://raw.githubusercontent.com/elementary/browser/cc17559a7ac6effe593712b4f3d0bbefde6e3b62/navigation-buttons.patch";
-      sha256 = "sha256-G1/JUjn/8DyO9sgL/5Kq205KbTOs4EMi4Vf3cJ8FHXU=";
-    })
-  ];
 
   nativeBuildInputs = [
     desktop-file-utils
@@ -86,8 +72,7 @@ stdenv.mkDerivation rec {
     icu
     isocodes
     json-glib
-    libdazzle
-    libhandy
+    libadwaita
     libportal-gtk4
     libarchive
     libsecret
