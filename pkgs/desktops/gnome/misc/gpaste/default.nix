@@ -44,6 +44,8 @@ stdenv.mkDerivation rec {
       --subst-var-by typelibPath "${placeholder "out"}/lib/girepository-1.0"
     substituteInPlace src/libgpaste/gpaste/gpaste-settings.c \
       --subst-var-by gschemasCompiled ${glib.makeSchemaPath (placeholder "out") "${pname}-${version}"}
+
+    substituteInPlace meson.build --replace 'mutter-clutter-11' 'mutter-clutter-12'
   '';
 
   nativeBuildInputs = [
