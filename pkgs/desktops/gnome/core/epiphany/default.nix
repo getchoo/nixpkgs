@@ -43,6 +43,15 @@ stdenv.mkDerivation rec {
     sha256 = "UccRkzgLjdoM7opWyLROzZLDi8fDStCGkP0rbXggApE=";
   };
 
+  patches = [
+    # Fix compatibility with latest WebKitGTK
+    # https://gitlab.gnome.org/GNOME/epiphany/-/merge_requests/1281
+    (fetchurl {
+      url = "https://src.fedoraproject.org/rpms/epiphany/raw/a8965d48efad1cbd41f67f1468d6d10e4407cd57/f/webkitgtk-2.39.90.patch";
+      hash = "sha256-07eoyWL/z5MgbU+tlq5CJ8CdR+90qHM8EJPJIQ/5Y0M=";
+    })
+  ];
+
   nativeBuildInputs = [
     desktop-file-utils
     gettext
