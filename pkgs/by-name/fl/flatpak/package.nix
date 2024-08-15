@@ -1,22 +1,18 @@
 {
   lib,
   stdenv,
-  fetchurl,
-  fetchpatch,
-  runCommand,
   appstream,
-  autoreconfHook,
   bison,
   bubblewrap,
-  buildPackages,
   bzip2,
   coreutils,
   curl,
   dbus,
   dconf,
   desktop-file-utils,
-  docbook_xml_dtd_45,
   docbook-xsl-nons,
+  docbook_xml_dtd_45,
+  fetchurl,
   fuse3,
   gettext,
   glib,
@@ -24,8 +20,8 @@
   gobject-introspection,
   gpgme,
   gsettings-desktop-schemas,
-  gtk3,
   gtk-doc,
+  gtk3,
   hicolor-icon-theme,
   intltool,
   json-glib,
@@ -35,15 +31,18 @@
   libseccomp,
   libxml2,
   libxslt,
+  meson,
+  ninja,
   nix-update-script,
-  nixosTests,
   nixos-icons,
+  nixosTests,
   ostree,
   p11-kit,
   pkg-config,
-  polkit,
   pkgsCross,
+  polkit,
   python3,
+  runCommand,
   shared-mime-info,
   socat,
   substituteAll,
@@ -89,19 +88,28 @@ stdenv.mkDerivation (finalAttrs: {
       inherit
         coreutils
         gettext
-        socat
         gtk3
+        socat
         ;
-      smi = shared-mime-info;
       dfu = desktop-file-utils;
       hicolorIconTheme = hicolor-icon-theme;
+      smi = shared-mime-info;
     })
 
     # Hardcode paths used by Flatpak itself.
     (substituteAll {
       src = ./fix-paths.patch;
-      p11kit = "${p11-kit.bin}/bin/p11-kit";
+      p11kit = lib.getExe' p11-kit "p11-kit";
     })
+
+    # Use flatpak from PATH to avoid references to `/nix/store` in `/desktop` files.
+    # Applications containing `DBusActivatable` entries should be able to find the flatpak binary.
+    # https://github.com/NixOS/nixpkgs/issues/138956
+    ./binary-path.patch
+
+    # Try mounting fonts and icons from NixOS locations if FHS locations don't exist.
+    # https://github.com/NixOS/nixpkgs/issues/119433
+    ./fix-fonts-icons.patch
 
     # Allow gtk-doc to find schemas using XML_CATALOG_FILES environment variable.
     # Patch taken from gtk-doc expression.
@@ -111,11 +119,6 @@ stdenv.mkDerivation (finalAttrs: {
     # https://github.com/NixOS/nixpkgs/issues/53441
     ./unset-env-vars.patch
 
-    # Use flatpak from PATH to avoid references to `/nix/store` in `/desktop` files.
-    # Applications containing `DBusActivatable` entries should be able to find the flatpak binary.
-    # https://github.com/NixOS/nixpkgs/issues/138956
-    ./binary-path.patch
-
     # The icon validator needs to access the gdk-pixbuf loaders in the Nix store
     # and cannot bind FHS paths since those are not available on NixOS.
     finalAttrs.passthru.icon-validator-patch
@@ -123,38 +126,33 @@ stdenv.mkDerivation (finalAttrs: {
     # Try mounting fonts and icons from NixOS locations if FHS locations don't exist.
     # https://github.com/NixOS/nixpkgs/issues/119433
     ./fix-fonts-icons.patch
-
-    # TODO: Remove when updating to 1.16
-    # Ensure flatpak uses the system's zoneinfo from $TZDIR
-    # https://github.com/NixOS/nixpkgs/issues/238386
-    (fetchpatch {
-      url = "https://github.com/flatpak/flatpak/pull/5850/commits/a8a35bf4d9fc3d76e1a5049a6a591faec04a42fd.patch";
-      hash = "sha256-JqkPbnzgZNZq/mplZqohhHFdjRrvYFjE4C02pI3feBo=";
-    })
-    (fetchpatch {
-      url = "https://github.com/flatpak/flatpak/pull/5850/commits/5ea13b09612215559081c27b60df4fb720cb08d5.patch";
-      hash = "sha256-BWbyQ2en3RtN4Ec5n62CULAhvywlQLhcl3Fmd4fsR1s=";
-    })
-    (fetchpatch {
-      url = "https://github.com/flatpak/flatpak/pull/5850/commits/7c8a81f08908019bbf69358de199748a9bcb29e3.patch";
-      hash = "sha256-RiG2jPmG+Igskxv8oQquOUYsG4srgdMXWe34ojMXslo=";
-    })
   ];
 
+  postPatch = ''
+    patchShebangs buildutil
+    patchShebangs tests
+    patchShebangs --build subprojects/variant-schema-compiler/variant-schema-compiler
+  '';
+
+  strictDeps = true;
+
   nativeBuildInputs = [
-    autoreconfHook
-    libxml2
-    docbook_xml_dtd_45
+    (python3.pythonOnBuildForHost.withPackages (p: [ p.pyparsing ]))
+    bison
     docbook-xsl-nons
-    which
+    docbook_xml_dtd_45
     gobject-introspection
+    # NOTE: this is required regardless of the GTK docs being built
     gtk-doc
     intltool
+    libxml2
     libxslt
+    meson
+    ninja
     pkg-config
-    xmlto
-    bison
+    which
     wrapGAppsNoGuiHook
+    xmlto
   ];
 
   buildInputs = [
@@ -164,23 +162,27 @@ stdenv.mkDerivation (finalAttrs: {
     curl
     dbus
     dconf
+    fuse3
+    fuse3
+    glib-networking
+    glib-networking
     gpgme
+    gsettings-desktop-schemas
+    gsettings-desktop-schemas
     json-glib
     libarchive
     libcap
+    librsvg # for flatpak-validate-icon
+    librsvg # for flatpak-validate-icon
     libseccomp
     libxml2
-    xz
-    zstd
     polkit
     python3
     systemd
     xorg.libXau
-    fuse3
-    gsettings-desktop-schemas
-    glib-networking
-    librsvg # for flatpak-validate-icon
-  ] ++ lib.optionals withGtkDoc [ gtk-doc ];
+    xz
+    zstd
+  ] ++ lib.optional withGtkDoc gtk-doc;
 
   # Required by flatpak.pc
   propagatedBuildInputs = [
@@ -192,55 +194,29 @@ stdenv.mkDerivation (finalAttrs: {
 
   # TODO: some issues with temporary files
   doCheck = false;
-  strictDeps = true;
 
-  NIX_LDFLAGS = "-lpthread";
-
-  enableParallelBuilding = true;
-
-  configureFlags = [
-    "--with-curl"
-    "--with-system-bubblewrap=${lib.getExe bubblewrap}"
-    "--with-system-dbus-proxy=${lib.getExe xdg-dbus-proxy}"
-    "--with-dbus-config-dir=${placeholder "out"}/share/dbus-1/system.d"
-    "--with-profile-dir=${placeholder "out"}/etc/profile.d"
-    "--localstatedir=/var"
-    "--sysconfdir=/etc"
-    "--enable-gtk-doc=${if withGtkDoc then "yes" else "no"}"
-    "--enable-installed-tests"
-    "--enable-selinux-module=no"
+  mesonFlags = [
+    (lib.mesonEnable "gtkdoc" withGtkDoc)
+    (lib.mesonEnable "installed_tests" true)
+    (lib.mesonEnable "selinux_module" false)
+    (lib.mesonEnable "tests" finalAttrs.doCheck)
+    (lib.mesonOption "dbus_config_dir" (placeholder "out" + "/share/dbus-1/system.d"))
+    (lib.mesonOption "http_backend" "curl")
+    (lib.mesonOption "profile_dir" (placeholder "out" + "/etc/profile.d"))
+    (lib.mesonOption "system_bubblewrap" (lib.getExe bubblewrap))
+    (lib.mesonOption "system_dbus_proxy" (lib.getExe xdg-dbus-proxy))
+    (lib.mesonOption "system_install_dir" "/var/lib/flatpak")
   ];
 
-  makeFlags = [
-    "installed_testdir=${placeholder "installedTests"}/libexec/installed-tests/flatpak"
-    "installed_test_metadir=${placeholder "installedTests"}/share/installed-tests/flatpak"
-  ];
-
-  postPatch =
-    let
-      vsc-py = python3.pythonOnBuildForHost.withPackages (pp: [ pp.pyparsing ]);
-    in
-    ''
-      patchShebangs buildutil
-      patchShebangs tests
-      PATH=${lib.makeBinPath [ vsc-py ]}:$PATH patchShebangs --build subprojects/variant-schema-compiler/variant-schema-compiler
-
-      substituteInPlace configure.ac \
-        --replace-fail '$BWRAP --' ${
-          lib.escapeShellArg (stdenv.hostPlatform.emulator buildPackages + " $BWRAP --")
-        } \
-        --replace-fail '$DBUS_PROXY --' ${
-          lib.escapeShellArg (stdenv.hostPlatform.emulator buildPackages + " $DBUS_PROXY --")
-        }
-    '';
+  env = {
+    NIX_LDFLAGS = "-lpthread";
+  };
 
   passthru = {
     icon-validator-patch = substituteAll {
       src = ./fix-icon-validation.patch;
       inherit (builtins) storeDir;
     };
-
-    updateScript = nix-update-script { };
 
     tests = {
       cross = pkgsCross.aarch64-multiplatform.flatpak;
@@ -257,6 +233,8 @@ stdenv.mkDerivation (finalAttrs: {
 
       version = testers.testVersion { package = finalAttrs.finalPackage; };
     };
+
+    updateScript = nix-update-script { };
   };
 
   meta = {
