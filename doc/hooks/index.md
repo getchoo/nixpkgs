@@ -26,6 +26,7 @@ pkg-config.section.md
 postgresql-test-hook.section.md
 python.section.md
 scons.section.md
+tauri.section.md
 tetex-tex-live.section.md
 unzip.section.md
 validatePkgConfig.section.md
