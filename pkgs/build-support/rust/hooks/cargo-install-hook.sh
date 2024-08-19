@@ -42,8 +42,10 @@ cargoInstallHook() {
     echo "Finished cargoInstallHook"
 }
 
+if [ -z "${dontCargoMoveTarget-}" ]; then
+  postBuildHooks+=(cargoInstallPostBuildHook)
+fi
 
 if [ -z "${dontCargoInstall-}" ] && [ -z "${installPhase-}" ]; then
   installPhase=cargoInstallHook
-  postBuildHooks+=(cargoInstallPostBuildHook)
 fi
