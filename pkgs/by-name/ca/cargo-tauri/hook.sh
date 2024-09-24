@@ -19,21 +19,6 @@ tauriBuildHook() {
     # separateDebugInfo.
     export "CARGO_PROFILE_${cargoBuildType@U}_STRIP"=false
 
-    if [ -n "${buildAndTestSubdir-}" ]; then
-        # ensure the output doesn't end up in the subdirectory
-        CARGO_TARGET_DIR="$(pwd)/target"
-        export CARGO_TARGET_DIR
-
-        # Tauri doesn't respect $CARGO_TARGET_DIR, but does respect the cargo
-        # argument...but that doesn't respect `--target`, so we have to use the
-        # config file
-        # https://github.com/tauri-apps/tauri/issues/10190
-        mkdir -p .cargo
-        printf '\nbuild.target-dir = "%s"' "$CARGO_TARGET_DIR" >>config.toml
-
-        pushd "${buildAndTestSubdir}"
-    fi
-
     local cargoFlagsArray=(
         "-j" "$NIX_BUILD_CORES"
         "--target" "@rustHostPlatformSpec@"
@@ -43,6 +28,11 @@ tauriBuildHook() {
         "--bundles" "${tauriBundleType:-@defaultTauriBundleType@}"
         "--target" "@rustHostPlatformSpec@"
     )
+
+    # https://github.com/tauri-apps/tauri/issues/10190 if fixed so we can default to `--target-dir` 
+    if [ -n "${buildAndTestSubdir-}" ]; then
+        cargoFlagsArray+=("--target-dir" "$(pwd)/target")
+    fi
 
     if [ "${cargoBuildType}" != "debug" ]; then
         cargoFlagsArray+=("--profile" "${cargoBuildType}")
