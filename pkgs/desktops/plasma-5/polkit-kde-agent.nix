@@ -28,4 +28,9 @@ mkDerivation {
     polkit-qt
   ];
   outputs = [ "out" "dev" ];
+
+  passthru = {
+    dbusName = "org.kde.polkit-kde-authentication-agent-1";
+    polkitAgentPath = "libexec/polkit-kde-authentication-agent-1";
+  };
 }

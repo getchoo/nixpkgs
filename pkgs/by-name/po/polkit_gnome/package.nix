@@ -19,6 +19,11 @@ stdenv.mkDerivation (finalAttrs: {
     substituteAll ${./polkit-gnome-authentication-agent-1.desktop} $out/etc/xdg/autostart/polkit-gnome-authentication-agent-1.desktop
   '';
 
+  passthru = {
+    busName = "org.gnome.polkit-gnome-authentication-agent-1";
+    polkitAgentPath = "libexec/polkit-gnome-authentication-agent-1";
+  };
+
   meta = {
     homepage = "https://gitlab.gnome.org/Archive/policykit-gnome";
     changelog = "https://gitlab.gnome.org/Archive/policykit-gnome/-/blob/${finalAttrs.version}/NEWS?ref_type=tags";
