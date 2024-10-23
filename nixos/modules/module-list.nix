@@ -357,6 +357,7 @@
   ./security/pam_mount.nix
   ./security/please.nix
   ./security/polkit.nix
+  ./security/polkit-agent.nix
   ./security/rngd.nix
   ./security/rtkit.nix
   ./security/sudo.nix
