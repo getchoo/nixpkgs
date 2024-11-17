@@ -10525,6 +10525,8 @@ self: super: with self; {
 
   pytask = callPackage ../development/python-modules/pytask { };
 
+  pytest-leaks = callPackage ../development/python-modules/pytest-leaks { };
+
   pytest-mockito = callPackage ../development/python-modules/pytest-mockito { };
 
   pytest-pudb = callPackage ../development/python-modules/pytest-pudb { };
