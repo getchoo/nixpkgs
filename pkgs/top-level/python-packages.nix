@@ -8412,6 +8412,8 @@ self: super: with self; {
 
   multidict = callPackage ../development/python-modules/multidict { };
 
+  multivolumefile = callPackage ../development/python-modules/multivolumefile { };
+
   multi-key-dict = callPackage ../development/python-modules/multi-key-dict { };
 
   multimethod = callPackage ../development/python-modules/multimethod { };
