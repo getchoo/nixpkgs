@@ -10150,6 +10150,8 @@ self: super: with self; {
 
   pwinput = callPackage ../development/python-modules/pwinput { };
 
+  py7zr = callPackage ../development/python-modules/py7zr { };
+
   pybars3 = callPackage ../development/python-modules/pybars3 { };
 
   pybcj = callPackage ../development/python-modules/pybcj { };
