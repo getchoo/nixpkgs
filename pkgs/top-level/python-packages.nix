@@ -14940,6 +14940,8 @@ self: super: with self; {
 
   spinners = callPackage ../development/python-modules/spinners { };
 
+  sphinx-a4doc = callPackage ../development/python-modules/sphinx-a4doc { };
+
   sphinx-automodapi = callPackage ../development/python-modules/sphinx-automodapi {
     graphviz = pkgs.graphviz;
   };
