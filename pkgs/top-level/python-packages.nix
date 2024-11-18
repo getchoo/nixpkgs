@@ -10529,6 +10529,8 @@ self: super: with self; {
 
   pytest-mockito = callPackage ../development/python-modules/pytest-mockito { };
 
+  pytest-profiling = callPackage ../development/python-modules/pytest-profiling { };
+
   pytest-pudb = callPackage ../development/python-modules/pytest-pudb { };
 
   pytest-ruff = callPackage ../development/python-modules/pytest-ruff { };
