@@ -17810,6 +17810,8 @@ self: super: with self; {
 
   wordfreq = callPackage ../development/python-modules/wordfreq { };
 
+  wordninja = callPackage ../development/python-modules/wordninja { };
+
   world-bank-data = callPackage ../development/python-modules/world-bank-data { };
 
   worldengine = callPackage ../development/python-modules/worldengine { };
