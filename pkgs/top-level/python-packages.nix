@@ -14976,6 +14976,8 @@ self: super: with self; {
 
   sphinx-notfound-page = callPackage ../development/python-modules/sphinx-notfound-page { };
 
+  sphinx-py3doc-enhanced-theme = callPackage ../development/python-modules/sphinx-py3doc-enhanced-theme { };
+
   sphinx-pytest = callPackage ../development/python-modules/sphinx-pytest { };
 
   sphinx-prompt = callPackage ../development/python-modules/sphinx-prompt { };
