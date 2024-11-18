@@ -107,6 +107,8 @@ self: super: with self; {
 
   aetcd = callPackage ../development/python-modules/aetcd { };
 
+  atheris = callPackage ../development/python-modules/atheris { };
+
   afdko = callPackage ../development/python-modules/afdko { };
 
   affine = callPackage ../development/python-modules/affine { };
