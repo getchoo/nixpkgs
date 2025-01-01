@@ -25,6 +25,8 @@ stdenv.mkDerivation (finalAttrs: {
     NIX_LDFLAGS = "-liconv";
   };
 
+  TRIGGER_REBUILD = true;
+
   doCheck = true;
 
   doInstallCheck = true;
