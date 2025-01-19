@@ -1,10 +1,10 @@
 {
   lib,
-  fetchFromGitHub,
   suffix ? "",
   version,
   src,
-  docCargoDeps,
+  docCargoDeps ? null,
+  cargoDeps ? null,
   patches ? [ ],
   maintainers ? lib.teams.lix.members,
 }@args:
@@ -18,6 +18,8 @@
   busybox-sandbox-shell,
   bzip2,
   callPackage,
+  capnproto,
+  cargo,
   curl,
   cmake,
   doxygen,
@@ -39,6 +41,7 @@
   nlohmann_json,
   ninja,
   openssl,
+  rustc,
   toml11,
   pegtl,
   python3,
@@ -49,6 +52,7 @@
   util-linuxMinimal,
   xz,
   nixosTests,
+  rustPlatform,
   lix-doc ? callPackage ./doc {
     inherit src;
     version = "${version}${suffix}";
@@ -57,6 +61,7 @@
 
   enableDocumentation ? stdenv.hostPlatform == stdenv.buildPlatform,
   enableStatic ? stdenv.hostPlatform.isStatic,
+  enableStrictLLVMChecks ? true,
   withAWS ? !enableStatic && (stdenv.hostPlatform.isLinux || stdenv.hostPlatform.isDarwin),
   aws-sdk-cpp,
   # RISC-V support in progress https://github.com/seccomp/libseccomp/pull/50
@@ -68,9 +73,14 @@
   storeDir,
 }:
 let
+  isLLVMOnly = lib.versionAtLeast version "2.92";
   isLegacyParser = lib.versionOlder version "2.91";
 in
-stdenv.mkDerivation {
+# gcc miscompiles coroutines at least until 13.2, possibly longer
+# do not remove this check unless you are sure you (or your users) will not report bugs to Lix upstream about GCC miscompilations.
+assert lib.assertMsg (enableStrictLLVMChecks && isLLVMOnly -> stdenv.cc.isClang)
+  "Lix upstream strongly discourage the usage of GCC to compile Lix as there's known miscompilations in important places. If you are a compiler developer, please get in touch with us.";
+stdenv.mkDerivation (finalAttrs: {
   pname = "lix";
 
   version = "${version}${suffix}";
@@ -91,8 +101,17 @@ stdenv.mkDerivation {
 
   strictDeps = true;
 
+  # We only include CMake so that Meson can locate toml11, which only ships CMake dependency metadata.
+  dontUseCmakeConfigure = true;
+
   nativeBuildInputs =
     [
+      # python3.withPackages does not splice properly, see https://github.com/NixOS/nixpkgs/issues/305858
+      (python3.pythonOnBuildForHost.withPackages (p: [
+        p.pytest
+        p.pytest-xdist
+        p.python-frontmatter
+      ]))
       pkg-config
       flex
       jq
@@ -100,6 +119,10 @@ stdenv.mkDerivation {
       ninja
       cmake
       python3
+      rustc
+      cargo
+      rustPlatform.cargoSetupHook
+      capnproto
 
       # Tests
       git
@@ -122,6 +145,7 @@ stdenv.mkDerivation {
       brotli
       bzip2
       curl
+      capnproto
       editline
       libsodium
       openssl
@@ -132,13 +156,22 @@ stdenv.mkDerivation {
       lowdown
       rapidcheck
       toml11
-      lix-doc
     ]
+    ++ lib.optional (lib.versionOlder finalAttrs.version "2.92.0") lix-doc
     ++ lib.optionals (!isLegacyParser) [ pegtl ]
     ++ lib.optionals stdenv.hostPlatform.isDarwin [ Security ]
     ++ lib.optionals (stdenv.hostPlatform.isx86_64) [ libcpuid ]
     ++ lib.optionals withLibseccomp [ libseccomp ]
     ++ lib.optionals withAWS [ aws-sdk-cpp ];
+
+  inherit cargoDeps;
+
+  env = {
+    # Meson allows referencing a /usr/share/cargo/registry shaped thing for subproject sources.
+    # Turns out the Nix-generated Cargo dependencies are named the same as they
+    # would be in a Cargo registry cache.
+    MESON_PACKAGE_CACHE_DIR = lib.optionalString (finalAttrs.cargoDeps != null) finalAttrs.cargoDeps;
+  };
 
   propagatedBuildInputs = [
     boehmgc
@@ -298,4 +331,4 @@ stdenv.mkDerivation {
     outputsToInstall = [ "out" ] ++ lib.optional enableDocumentation "man";
     mainProgram = "nix";
   };
-}
+})

@@ -4,6 +4,8 @@
   boehmgc,
   callPackage,
   fetchFromGitHub,
+  clangStdenv,
+  stdenv,
   fetchpatch,
   rustPlatform,
   Security,
@@ -37,10 +39,11 @@ let
 
   # Since Lix 2.91 does not use boost coroutines, it does not need boehmgc patches either.
   needsBoehmgcPatches = version: lib.versionOlder version "2.91";
+  needsClang = version: lib.versionAtLeast version "2.92";
 
   common =
     args:
-    callPackage (import ./common.nix ({ inherit lib fetchFromGitHub; } // args)) {
+    callPackage (import ./common.nix ({ inherit lib; } // args)) {
       inherit
         Security
         storeDir
@@ -49,6 +52,7 @@ let
         ;
       boehmgc = if needsBoehmgcPatches args.version then boehmgc-nix else boehmgc-nix_2_3;
       aws-sdk-cpp = aws-sdk-cpp-nix;
+      stdenv = if (needsClang args.version) then clangStdenv else stdenv;
     };
 in
 lib.makeExtensible (self: {
@@ -96,6 +100,31 @@ lib.makeExtensible (self: {
     }
   );
 
-  latest = self.lix_2_91;
-  stable = self.lix_2_91;
+  lix_2_92 = (
+    common rec {
+      version = "2.92.0";
+
+      src = fetchFromGitHub {
+        owner = "lix-project";
+        repo = "lix";
+        tag = version;
+        hash = "sha256-vm5Ddu2PFeu/zACE+M/xyT04sfZ4FApvyiUgrZ0BA84=";
+        postFetch = ''
+          echo symlinking Cargo.lock to lix/lix-doc/
+          cd "$out/lix/lix-doc"
+          ln -s ../../Cargo.lock Cargo.lock
+        '';
+      };
+
+      cargoDeps = rustPlatform.fetchCargoVendor {
+        pname = "lix";
+        inherit version src;
+        allowGitDependencies = false;
+        hash = "sha256-YMyNOXdlx0I30SkcmdW/6DU0BYc3ZOa2FMJSKMkr7I8=";
+      };
+    }
+  );
+
+  latest = self.lix_2_92;
+  stable = self.lix_2_92;
 })
