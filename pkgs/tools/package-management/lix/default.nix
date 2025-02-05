@@ -108,11 +108,15 @@ lib.makeExtensible (self: {
         owner = "lix-project";
         repo = "lix";
         tag = version;
-        hash = "sha256-vm5Ddu2PFeu/zACE+M/xyT04sfZ4FApvyiUgrZ0BA84=";
+        hash = "sha256-yrPI1oMsmebCgHFvRZy5bCKS8NwgIdwiBXtViZRyJaE=";
         postFetch = ''
           echo symlinking Cargo.lock to lix/lix-doc/
           cd "$out/lix/lix-doc"
           ln -s ../../Cargo.lock Cargo.lock
+
+          echo "Patching includes in lix/libutil/file-descriptor.cc"
+          substituteInPlace $out/lix/libutil/file-descriptor.cc \
+            --replace-fail '#include <unistd.h>' '#include <sys/syscall.h>\n#include <unistd.h>'
         '';
       };
 
